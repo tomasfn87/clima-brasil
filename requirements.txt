@@ -1,2 +1,4 @@
+colorama==0.4.6
 numpy==1.26.2
-selenium==4.15.2
+Requests==2.31.0
+selenium==4.16.0
