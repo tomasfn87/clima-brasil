@@ -1,5 +1,6 @@
 from result_set import ResultSet
 from typing import Any, List
+
 import datetime as dt
 import numpy as np
 import utils as ut
@@ -66,7 +67,6 @@ class ResultSetsPrinter:
             + len(after_middle) \
             + len(right)
 
-        # Fix titles that are too small
         for r in r_list:
             header_length = len(left) \
                 + len(before_middle) \
@@ -85,71 +85,88 @@ class ResultSetsPrinter:
             max_header_length = self.get_min_width()
 
         for i in range(len(r_list)):
-            provider: str = "{}{}{}".format(
-                left,
-                r_list[i].get_provider(),
-                before_middle)
+            provider_1: str = left
+            provider_2: str = r_list[i].get_provider()
+            provider_3: str = before_middle
 
-            title: str = "{}{}{}".format(
-                after_middle,
-                r_list[i].get_title(),
-                "{}{}".format(
-                    " " * (max_header_length - (
-                        len(provider)
-                        + len(middle)
-                        + len(after_middle)
-                        + len(r_list[i].get_title())
-                        + len(right))),
-                    right))
-
-            header: str = f"{provider}{middle}{title}"
+            title_1: str = after_middle
+            title_2: str = r_list[i].get_title()
+            title_3: str = "{}{}".format(
+                " " * (max_header_length - (
+                    len(provider_1)
+                    + len(provider_2)
+                    + len(provider_3)
+                    + len(middle)
+                    + len(title_1)
+                    + len(title_2)
+                    + len(right))),
+                right)
 
             frame: str = "{}{}{}{}{}".format(
                 "┌",
-                "─" * (len(provider) - 1),
+                "─" * (
+                    len(provider_1)
+                    + len(provider_2)
+                    + len(provider_3) - 1),
                 "┬",
-                "─" * (max_header_length - (len(provider) + len(middle)) - 1),
+                "─" * (max_header_length - (
+                    len(provider_1)
+                    + len(provider_2)
+                    + len(provider_3)
+                    + len(middle)) - 1),
                 "┐")
 
-            # Start impression job
             if i == 0:
-                # Frame for first Result Set
                 print(frame
                     .replace("─", "═").replace("┬", "╤")
                     .replace("┌", "╒").replace("┐", "╕"), end="")
             else:
-                # Frame for remaining Result Sets
                 print(frame, end="")
 
-            # Display header inside the frame
-            print("\n{}\n{}".format(header, frame
-                .replace("┬", "┴").replace("┌", "└").replace("┐", "┘")))
+            print(f"\n{provider_1}", end="")
+            ut.print_yellow(provider_2, end="")
+            print("{}{}{}".format(
+                provider_3, middle, title_1), end="")
+            ut.print_lyellow(title_2, end="")
+            print(title_3)
+
+            print(frame
+                .replace("┬", "┴").replace("┌", "└").replace("┐", "┘"))
 
             union: str = ": "
 
-            # Maximum line size is defined by provider and title lengths
             max_result_length: int = max_header_length \
                 - (padding + len(union)) - 1
 
-            # Display the actual results (key-value pairs)
             for j in range(len(r_list[i].results)):
                 key  : str = list(r_list[i].results[j].keys())[0]
                 value: str = list(r_list[i].results[j].values())[0]
 
-                print(f"{key.rjust(padding)}{union}", end="")
+                if j % 2 != 0:
+                     ut.print_green(f"{key.rjust(padding)}", end="")
+                else:
+                     ut.print_cyan(f"{key.rjust(padding)}", end="")
+                print(union, end="")
 
-                # Case when values need more than one line to be displayed
                 if len(value) > max_result_length:
                     lines: np.ndarray[Any, np.dtype[np.str_]] = \
                         ut.splitlines_by_length(value, max_result_length)
-                    print(lines[0])
+                    if j % 2 != 0:
+                        ut.print_lgreen(lines[0])
+                    else:
+                        ut.print_lcyan(lines[0])
                     for k in range(1, len(lines)):
-                        print("{}{}".format(
-                            " " * (padding + len(union)), lines[k]))
-                # Case when values need only one line to be displayed
+                        if j % 2 != 0:
+                            ut.print_lgreen("{}{}".format(
+                                " " * (padding + len(union)), lines[k]))
+                        else:
+                            ut.print_lcyan("{}{}".format(
+                                " " * (padding + len(union)), lines[k]))
                 else:
-                    print(value)
+                    if j % 2 != 0:
+                        ut.print_lgreen(value)
+                    else:
+                        ut.print_lcyan(value)
 
-            # Finish impression job
             if i is len(self.result_list) - 1:
                 print(f'{"═" * max_header_length}')
