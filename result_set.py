@@ -1,5 +1,6 @@
-import utils as ut
 from typing import Any, Dict, List
+
+import utils as ut
 
 class ResultSet:
     def __init__(
