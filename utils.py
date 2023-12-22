@@ -1,7 +1,27 @@
+from colorama import Fore, Style
+from typing import Any, Dict, List
+
 import numpy as np
 import re
 import requests as req
-from typing import Any, Dict, List
+
+def print_cyan(text, end="\n"):
+    print(Fore.CYAN + text + Style.RESET_ALL, end=end)
+
+def print_lcyan(text, end="\n"):
+    print(Fore.LIGHTCYAN_EX + text + Style.RESET_ALL, end=end)
+
+def print_green(text, end="\n"):
+    print(Fore.GREEN + text + Style.RESET_ALL, end=end)
+
+def print_lgreen(text, end="\n"):
+    print(Fore.LIGHTGREEN_EX + text + Style.RESET_ALL, end=end)
+
+def print_yellow(text, end="\n"):
+    print(Fore.YELLOW + text + Style.RESET_ALL, end=end)
+
+def print_lyellow(text, end="\n"):
+    print(Fore.LIGHTYELLOW_EX + text + Style.RESET_ALL, end=end)
 
 def capitalize_all(text: str) -> str:
     if " " not in text:
