@@ -1,3 +1,10 @@
+from result_set import ResultSet
+from result_sets_printer import ResultSetsPrinter
+from selenium import webdriver as wd
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from typing import Any, Dict, List
+
 import json
 import numpy as np
 import os
@@ -5,12 +12,6 @@ import re
 import sys
 import time as t
 import utils as ut
-from result_set import ResultSet
-from result_sets_printer import ResultSetsPrinter
-from selenium import webdriver as wd
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from typing import Any, Dict, List
 
 def main() -> None:
     inputs: List[str] = sys.argv
