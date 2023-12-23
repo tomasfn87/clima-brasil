@@ -6,14 +6,16 @@ Aplicação CLI em Python que usa `selenium` para obter dados de Condição/Prev
 
 - `python3`
   - `pip`
-    - `selenium`
+    - `colorama`
     - `numpy`
+    - `selenium`
+    - `Request`
 
 ---
 
 ## Comandos
 
-### Instalação dos bibliotecas necessárias
+### Instalação das bibliotecas necessárias
 
 ```console
 pip install -r requirements.txt
