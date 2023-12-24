@@ -29,14 +29,39 @@ def main() -> None:
 
     cidade: str = inputs[1]
     estado: str = inputs[2]
-
-    file_dir: str = os.path.dirname(os.path.realpath(__file__))
-    with open(f"{file_dir}/brazilian_states_list.min.json", "r") as data:
-        states_json: str = data.read()
-        estados_brasileiros: List[Dict[str, str]] = json.loads(states_json)
+    
+    estados_brasileiros = np.array([
+        { "acronym": "AC", "name": "Acre" },
+        { "acronym": "AL", "name": "Alagoas" },
+        { "acronym": "AP", "name": "Amapá" },
+        { "acronym": "AM", "name": "Amazonas" },
+        { "acronym": "BA", "name": "Bahia" },
+        { "acronym": "CE", "name": "Ceará" },
+        { "acronym": "DF", "name": "Distrito Federal" },
+        { "acronym": "ES", "name": "Espírito Santo" },
+        { "acronym": "GO", "name": "Goiás" },
+        { "acronym": "MA", "name": "Maranhão" },
+        { "acronym": "MT", "name": "Mato Grosso" },
+        { "acronym": "MS", "name": "Mato Grosso do Sul" },
+        { "acronym": "MG", "name": "Minas Gerais" },
+        { "acronym": "PA", "name": "Pará" },
+        { "acronym": "PB", "name": "Paraíba" },
+        { "acronym": "PR", "name": "Paraná" },
+        { "acronym": "PE", "name": "Pernambuco" },
+        { "acronym": "PI", "name": "Piauí" },
+        { "acronym": "RJ", "name": "Rio de Janeiro" },
+        { "acronym": "RN", "name": "Rio Grande do Norte" },
+        { "acronym": "RS", "name": "Rio Grande do Sul" },
+        { "acronym": "RO", "name": "Rondônia" },
+        { "acronym": "RR", "name": "Roraima" },
+        { "acronym": "SC", "name": "Santa Catarina" },
+        { "acronym": "SP", "name": "São Paulo" },
+        { "acronym": "SE", "name": "Sergipe "},
+        { "acronym": "TO", "name": "Tocantins" }], dtype=np.object_)
 
     if not ut.is_a_valid_fixed_length_acronym(
         s=estado, length=2, acronym_list=estados_brasileiros):
+
         print("ERRO: o segundo argumento deve ser uma sigla válida ", end="")
         print("de estado brasileiro (UF).")
         subtitle: str = "Siglas válidas:"
@@ -151,7 +176,7 @@ def condicao_tempo_accuweather(
         if len(tempoAtualExtraRealFeelData) == 2:
             rFShade: np.ndarray[Any, np.dtype[np.str_]] = \
                 np.char.split([tempoAtualExtraRealFeelData[1]])[0]
-            tempoAtualExtraRealFeelShadeTitulo = f"{rFShade[0]} {rFShade[1]}"
+            tempoAtualRealFeelShadeTitulo = f"{rFShade[0]} {rFShade[1]}"
             tempoAtualExtraRealFeelShadeValor = rFShade[2]
 
         results.add_key_value(

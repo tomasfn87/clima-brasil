@@ -1,5 +1,5 @@
 from colorama import Fore, Style
-from typing import Any, Dict, List
+from typing import Any, List
 
 import numpy as np
 import re
@@ -43,8 +43,9 @@ def capitalize_all(text: str) -> str:
     return "".join(result).strip()
 
 def is_a_valid_fixed_length_acronym(
-    s: str, length: int, acronym_list: List[Dict[str, str]]) -> bool:
-
+    s: str,
+    length: int,
+    acronym_list: np.ndarray[Any, np.dtype[np.object_]]) -> bool:
     if len(s.strip()) != length:
         return False
     return any(i["acronym"] == s.strip().upper() for i in acronym_list)
@@ -62,7 +63,8 @@ def limit_empty_spaces(text: str) -> str:
     return re.sub(r"\s{2,}", " ", text, 0)
 
 def list_brazilian_states_acronyms(
-    states_list: List[Dict[str, str]]) -> np.ndarray[Any, np.dtype[np.str_]]:
+    states_list: np.ndarray[Any, np.dtype[np.object_]]
+    ) -> np.ndarray[Any, np.dtype[np.str_]]:
 
     return np.array([ f'{state["acronym"]} ({state["name"]})'
             for state in states_list ], dtype=np.str_)
