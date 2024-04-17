@@ -29,7 +29,7 @@ def main() -> None:
 
     cidade: str = inputs[1]
     estado: str = inputs[2]
-    
+
     estados_brasileiros = np.array([
         { "acronym": "AC", "name": "Acre" },
         { "acronym": "AL", "name": "Alagoas" },
@@ -287,21 +287,24 @@ def previsao_tempo_climatempo(
     nascerPorDoSol = ""
 
     for i in range(0, len(data)):
-        if data[i] == "UMIDADE DO AR":
+        if data[i] == "UMIDADE DO AR" and len(data) >= i+2:
             umidade = data[i+1]
-        if data[i] == "SOL":
+        if data[i] == "SOL" and len(data) >= i+2:
             nascerPorDoSol = data[i+1]
-        if data[i] == "LUA":
+        if data[i] == "LUA" and len(data) >= i+2:
             lua = data[i+1]
 
     results.add_key_value("Temperatura mínima", f"{tempMin}C")
     results.add_key_value("Temperatura máxima", f"{tempMax}C")
     results.add_key_value("Previsão", previsao)
     results.add_key_value("Pluviosidade", pluviosidade)
-    results.add_key_value("Umidade", umidade)
-    results.add_key_value("Nascer/pôr do sol",
-        nascerPorDoSol.replace("-", "/"))
-    results.add_key_value("Lua", lua)
+    if umidade:
+        results.add_key_value("Umidade", umidade)
+    if nascerPorDoSol:
+        results.add_key_value(
+            "Nascer/pôr do sol", nascerPorDoSol.replace("-", "/"))
+    if lua:
+        results.add_key_value("Lua", lua)
 
     return results
 
