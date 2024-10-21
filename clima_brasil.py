@@ -5,9 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from typing import Any, Dict, List
 
-import json
 import numpy as np
-import os
 import re
 import sys
 import time as t
@@ -22,7 +20,7 @@ def main() -> None:
     elif len(inputs) > 4:
         print("ERRO: digite apenas cidade e estado; coloque aspas simples ou")
         print("  duplas  se o nome da cidade possuir mais de uma palavra ou")
-        print("    utilize  a barra invertida (\) para cancelar um espaço ")
+        print(r"    utilize  a barra invertida (\) para cancelar um espaço ")
         print("      vazio como separador de argumentos.")
         print_examples()
         return
@@ -97,7 +95,7 @@ def print_examples() -> None:
     print(r"python3 previsao_do_tempo_brasil.py rio\ de\ janeiro rj")
 
 def clima(
-    cidade: str, estado: str, headless: bool=False) -> None:
+    cidade: str, estado: str, headless: bool=True) -> None:
 
     resultados_condicao_tempo: ResultSet = condicao_tempo_accuweather(
         cidade=cidade, estado=estado, headless=headless)
@@ -311,6 +309,10 @@ def previsao_tempo_climatempo(
 def start_chrome(headless: bool=False) -> wd.Chrome:
     options: wd.ChromeOptions = wd.ChromeOptions()
     headless and options.add_argument("--headless")
+    user_agent = "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64 "
+    user_agent += "AppleWebKit/537.36 (KHTML, like Gecko) "
+    user_agent += "Chrome/91.0.4472.124 Safari/537.36"
+    options.add_argument(user_agent)
     options.add_argument("--disable-extensions")
     options.add_argument("--profile-directory=Default")
     options.add_argument("--incognito")
