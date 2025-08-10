@@ -308,7 +308,7 @@ def previsao_tempo_climatempo(
 
 def start_chrome(headless: bool=False) -> wd.Chrome:
     options: wd.ChromeOptions = wd.ChromeOptions()
-    headless and options.add_argument("--headless")
+    if headless: options.add_argument("--headless")
     user_agent = "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64 "
     user_agent += "AppleWebKit/537.36 (KHTML, like Gecko) "
     user_agent += "Chrome/91.0.4472.124 Safari/537.36"
