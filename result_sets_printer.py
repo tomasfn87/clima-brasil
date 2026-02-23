@@ -40,8 +40,8 @@ class ResultSetsPrinter:
                 max_header_length = header_length
         return max_header_length
 
-    def print_all(self: Any) -> None:
-        print(f" ->  {str(dt.datetime.now())[0:19]}")
+    def print_all(self: Any, tz: dt.timezone) -> None:
+        print(f" ->  {str(dt.datetime.now(tz=tz))[0:19]}")
 
         r_list = self.result_list
 

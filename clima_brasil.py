@@ -10,6 +10,7 @@ import re
 import sys
 import time as t
 import utils as ut
+from zoneinfo import ZoneInfo
 
 def main() -> None:
     inputs: List[str] = sys.argv
@@ -113,7 +114,7 @@ def clima(
         result_printer.add_results(resultados_previsao_tempo)
 
     if result_printer.get_num_of_results():
-        result_printer.print_all()
+        result_printer.print_all(tz=ZoneInfo("America/Sao_Paulo"))
     else:
         print("ERRO: as informações estão indisponíveis. ", end="")
         print("Tente novamente mais tarde.")
