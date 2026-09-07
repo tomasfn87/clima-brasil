@@ -127,7 +127,7 @@ def condicao_tempo_accuweather(
 
     try:
         browser.find_element(
-            By.CSS_SELECTOR, "input[type=text]").send_keys(
+            By.CSS_SELECTOR, 'textarea[data-mode="search"]').send_keys(
                 f"accuweather pt br brazil weather {cidade} {estado}",
                     Keys.ENTER)
 
@@ -144,24 +144,16 @@ def condicao_tempo_accuweather(
         results: ResultSet = ResultSet(provider=provider, title=title)
 
         tempoAtualTitulo: str = browser.find_element(
-            By.CSS_SELECTOR, ".current-weather-card h1").text
+            By.CSS_SELECTOR, ".page-content .phrase").text
 
         tempoAtualValor: str = browser.find_element(
             By.CSS_SELECTOR,
-                ".current-weather-card div.current-weather-info div.temp").text
-
-        tempoAtualSensacaoValor: str = browser.find_element(
-            By.CSS_SELECTOR, ".current-weather-card div.phrase").text
+                ".page-content .temp.metric").text
 
         tempoAtualExtraRealFeelData: np.ndarray[Any, np.dtype[np.str_]] = \
             np.char.splitlines([browser.find_element(
                 By.CSS_SELECTOR,
-                ".current-weather-card div.current-weather-extra").text])[0]
-
-        detalhes: np.ndarray[Any, np.dtype[np.str_]] = np.char.splitlines(
-            [browser.find_element(
-                By.CSS_SELECTOR,
-                ".current-weather-card .current-weather-details").text])[0]
+                ".page-content .real-feel__text").text])[0]
 
         tempoAtualRealFeelTitulo: str = np.char.split(
             [tempoAtualExtraRealFeelData[0]])[0][0]
@@ -180,7 +172,7 @@ def condicao_tempo_accuweather(
 
         results.add_key_value(
             tempoAtualTitulo,
-            f"{tempoAtualValor} ({tempoAtualSensacaoValor})")
+            f"{tempoAtualValor}")
 
         results.add_key_value(
             tempoAtualRealFeelTitulo,
@@ -191,11 +183,14 @@ def condicao_tempo_accuweather(
             results.add_key_value(
                 tempoAtualRealFeelShadeTitulo,
                 f"{tempoAtualExtraRealFeelShadeValor}C")
+        
+        detalhes = browser.find_elements(
+            By.CSS_SELECTOR,
+            ".panel.no-realfeel-phrase p"
+        )
 
         for i in range(len(detalhes)):
-            if i % 2 == 0:
-                results.add_key_value(f"{detalhes[i]}",
-                    f'{detalhes[i+1].replace("° C", "°C")}')
+            print(detalhes[i])
     except:
         return ResultSet()
     finally:
@@ -210,7 +205,7 @@ def previsao_tempo_climatempo(
     browser.get("https://www.duckduckgo.com")
 
     browser.find_element(
-        By.CSS_SELECTOR, "input[type=text]").send_keys(
+        By.CSS_SELECTOR, 'textarea[data-mode="search"]').send_keys(
             f"climatempo {cidade} {estado} brasil", Keys.ENTER)
 
     browser.find_element(
