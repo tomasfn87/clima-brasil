@@ -3,6 +3,7 @@ from result_sets_printer import ResultSetsPrinter
 from selenium import webdriver as wd
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.remote.webelement import WebElement
 from typing import Any, Dict, List
 
 import numpy as np
@@ -98,17 +99,11 @@ def print_examples() -> None:
 def clima(
     cidade: str, estado: str, headless: bool=True) -> None:
 
-    resultados_condicao_tempo: ResultSet = condicao_tempo_accuweather(
-        cidade=cidade, estado=estado, headless=headless)
-
     resultados_previsao_tempo: ResultSet = previsao_tempo_climatempo(
         cidade=cidade, estado=estado, headless=headless)
 
     result_printer: ResultSetsPrinter = ResultSetsPrinter(
         margin=2, min_width=72)
-
-    if resultados_condicao_tempo.get_num_of_results():
-        result_printer.add_results(resultados_condicao_tempo)
 
     if resultados_previsao_tempo.get_num_of_results():
         result_printer.add_results(resultados_previsao_tempo)
@@ -119,187 +114,114 @@ def clima(
         print("ERRO: as informações estão indisponíveis. ", end="")
         print("Tente novamente mais tarde.")
 
-def condicao_tempo_accuweather(
-    cidade: str, estado: str, headless: bool=False) -> ResultSet:
-
-    browser: wd.Chrome = start_chrome(headless)
-    browser.get("https://www.duckduckgo.com")
-
-    try:
-        browser.find_element(
-            By.CSS_SELECTOR, 'textarea[data-mode="search"]').send_keys(
-                f"accuweather pt br brazil weather {cidade} {estado}",
-                    Keys.ENTER)
-
-        url: str|None = browser.find_element(
-            By.CSS_SELECTOR, "#r1-0 h2 a").get_attribute("href")
-
-        browser.get(format_accuweather_url(url))
-        t.sleep(1)
-        browser.implicitly_wait(1)
-
-        provider: str = "AccuWeather"
-        title: str = "Condições meteorológicas em "
-        title += f"{ut.capitalize_all(cidade)}/{estado.upper()}, Brasil"
-        results: ResultSet = ResultSet(provider=provider, title=title)
-
-        tempoAtualTitulo: str = browser.find_element(
-            By.CSS_SELECTOR, ".page-content .phrase").text
-
-        tempoAtualValor: str = browser.find_element(
-            By.CSS_SELECTOR,
-                ".page-content .temp.metric").text
-
-        tempoAtualExtraRealFeelData: np.ndarray[Any, np.dtype[np.str_]] = \
-            np.char.splitlines([browser.find_element(
-                By.CSS_SELECTOR,
-                ".page-content .real-feel__text").text])[0]
-
-        tempoAtualRealFeelTitulo: str = np.char.split(
-            [tempoAtualExtraRealFeelData[0]])[0][0]
-
-        tempoAtualRealFeelValor: str = np.char.split(
-            [tempoAtualExtraRealFeelData[0]])[0][1]
-
-        tempoAtualRealFeelShadeTitulo: str = ""
-        tempoAtualRealFeelShadeValor: str = ""
-
-        if len(tempoAtualExtraRealFeelData) == 2:
-            rFShade: np.ndarray[Any, np.dtype[np.str_]] = \
-                np.char.split([tempoAtualExtraRealFeelData[1]])[0]
-            tempoAtualRealFeelShadeTitulo = f"{rFShade[0]} {rFShade[1]}"
-            tempoAtualExtraRealFeelShadeValor = rFShade[2]
-
-        results.add_key_value(
-            tempoAtualTitulo,
-            f"{tempoAtualValor}")
-
-        results.add_key_value(
-            tempoAtualRealFeelTitulo,
-            f"{tempoAtualRealFeelValor}C")
-
-        if tempoAtualRealFeelShadeTitulo \
-            and tempoAtualRealFeelShadeValor:
-            results.add_key_value(
-                tempoAtualRealFeelShadeTitulo,
-                f"{tempoAtualExtraRealFeelShadeValor}C")
-        
-        detalhes = browser.find_elements(
-            By.CSS_SELECTOR,
-            ".panel.no-realfeel-phrase p"
-        )
-
-        for i in range(len(detalhes)):
-            print(detalhes[i])
-    except:
-        return ResultSet()
-    finally:
-        browser.quit()
-
-    return results
-
 def previsao_tempo_climatempo(
     cidade: str, estado: str, headless: bool=False) -> ResultSet:
 
     browser: wd.Chrome = start_chrome(headless)
     browser.get("https://www.duckduckgo.com")
 
-    browser.find_element(
-        By.CSS_SELECTOR, 'textarea[data-mode="search"]').send_keys(
-            f"climatempo {cidade} {estado} brasil", Keys.ENTER)
+    browser.find_element(By.CSS_SELECTOR, 'textarea[data-mode="search"]') \
+        .send_keys(
+            f"climatempo previsao-do-tempo {cidade} {estado} brasil",
+            Keys.ENTER)
 
     browser.find_element(
-        By.CSS_SELECTOR, "#r1-0 h2 a").click()
+        By.CSS_SELECTOR, 'article h2 a[href*="previsao-do-tempo/cidade"]'
+    ).click()
 
     t.sleep(1)
     browser.implicitly_wait(1)
 
-    data = np.array([], dtype="S")
-
     provider: str = "ClimaTempo"
+    
     title: str = "Previsão do tempo em "
     title += f"{ut.capitalize_all(cidade)}/{estado.upper()}, Brasil"
+    
     results: ResultSet = ResultSet(provider=provider, title=title)
 
-    tempMin: str = ""
-    tempMax: str = ""
-    previsao: str = ""
-    nascerPorDoSol: str = ""
-
     try:
-        data = np.char.splitlines([browser.find_element(
-            By.CSS_SELECTOR,
-            'div[class="card -no-top -no-bottom"]').text])[0]
-
-        browser.quit()
-
-        comparacao: str = data[0]
-        previsao = data[1]
-        tempMin = data[7]
-        tempMax = data[8]
-        precipitacao: str = data[10]
-        umidadeMin: str = data[14]
-        umidadeMax: str = data[15]
-        nascerPorDoSol = ""
-
-        for i in range(0, len(data)):
-            if data[i] == "Sol":
-                nascerPorDoSol = data[i+1].replace("h", "")
-
-        results.add_key_value("Temperatura mínima", f"{tempMin}C")
-        results.add_key_value("Temperatura máxima", f"{tempMax}C")
-        results.add_key_value("Comparação", comparacao)
-        results.add_key_value("Previsão", previsao)
-        results.add_key_value("Precipitação", precipitacao)
-        results.add_key_value("Humidade mínima", umidadeMin)
-        results.add_key_value("Humidade máxima", umidadeMax)
-
-        if nascerPorDoSol:
-            results.add_key_value("Nascer/pôr do sol",
-                nascerPorDoSol.replace(" ", " / "))
-
-        return results
-    except:
-        pass
-
-    try:
-        data = ut.remove_empty_elements(np.char.splitlines(
-            [browser.find_element(
-                By.CSS_SELECTOR,
-                "#first-block-of-days section").text])[0])
+        comparacao_elements: List[WebElement]|None = browser.find_elements(
+            By.CSS_SELECTOR, '.today-forecast-card__intro')
+        comparacao_texts: List[str] = []
+        
+        if len(comparacao_elements) > 0:
+            for i in comparacao_elements:
+                comparacao_texts.append(i.text)
+            results.add_key_value(
+                'Comparação',
+                (" ".join(comparacao_texts) + '.'))
+            
+        descricao_text: str = try_to_grab_element_text(
+            browser,
+            '.today-forecast-card__desc')
+        if descricao_text:
+            results.add_key_value('Descrição', descricao_text)
+            
+        temperaturas: List[Dict[str, str]] = [
+            {   
+                'title': 'Temperatura mínima',
+                'css': '.daily-variables-grid__item.-temperature .daily-variables-grid__value.-cool',
+            },
+            {
+                'title': 'Temperatura máxima',
+                'css': '.daily-variables-grid__item.-temperature .daily-variables-grid__value.-warm',
+            },
+            {
+                'title': 'Sensação térmica mínima',
+                'css': '.daily-variables-grid__item.-thermal .daily-variables-grid__value.-cool',
+            },
+            {
+                'title': 'Sensação térmica máxima',
+                'css': '.daily-variables-grid__item.-thermal .daily-variables-grid__value.-warm',
+            },
+        ]
+        
+        for i in temperaturas:
+            data = try_to_grab_element_text_and_fix_temperature(browser, i['css'], 'C')
+            if data:
+                results.add_key_value(i['title'], data)
+        
+        demais_dados: List[Dict[str, str]] = [
+            {
+                'title': 'Chuva',
+                'css': '.daily-variables-grid__item.-rain .daily-variables-grid__value',
+            },
+            {
+                'title': 'Humidade mínima',
+                'css': '.daily-variables-grid__item.-humidity .daily-variables-grid__value.-cool',
+            },
+            {
+                'title': 'Humidade máxima',
+                'css': '.daily-variables-grid__item.-humidity .daily-variables-grid__value.-warm',
+            },
+            {
+                'title': 'Horário sol',
+                'css': '.daily-variables-grid__item.-sun .daily-variables-grid__value',
+            },
+            {
+                'title': 'Vento',
+                'css': '.daily-variables-grid__item.-wind .daily-variables-grid__value',
+            },
+            {
+                'title': 'Rajada de vento',
+                'css': '.daily-variables-grid__item.-gust .daily-variables-grid__value',
+            },
+            {
+                'title': 'Arco íris',
+                'css': '.daily-variables-grid__item.-rainbow .daily-variables-grid__value',
+            },
+        ]
+        
+        for i in demais_dados:
+            data = try_to_grab_element_text(browser, i['css'])
+            if data:
+                results.add_key_value(i['title'], data)
+            
     except:
         return ResultSet()
     finally:
         browser.quit()
-
-    tempMin = data[2]
-    tempMax = data[3]
-    pluviosidade: str = data[4]
-    previsao = data[5]
-    umidade: str = ""
-    lua: str = ""
-    nascerPorDoSol = ""
-
-    for i in range(0, len(data)):
-        if data[i] == "UMIDADE DO AR" and len(data) >= i+2:
-            umidade = data[i+1]
-        if data[i] == "SOL" and len(data) >= i+2:
-            nascerPorDoSol = data[i+1]
-        if data[i] == "LUA" and len(data) >= i+2:
-            lua = data[i+1]
-
-    results.add_key_value("Temperatura mínima", f"{tempMin}C")
-    results.add_key_value("Temperatura máxima", f"{tempMax}C")
-    results.add_key_value("Previsão", previsao)
-    results.add_key_value("Pluviosidade", pluviosidade)
-    if umidade:
-        results.add_key_value("Umidade", umidade)
-    if nascerPorDoSol:
-        results.add_key_value(
-            "Nascer/pôr do sol", nascerPorDoSol.replace("-", "/"))
-    if lua:
-        results.add_key_value("Lua", lua)
-
+    
     return results
 
 def start_chrome(headless: bool=False) -> wd.Chrome:
@@ -323,11 +245,24 @@ def start_chrome(headless: bool=False) -> wd.Chrome:
 
     return wd.Chrome(options=options)
 
-def format_accuweather_url(url: str|None) -> str:
-    if url is None:
-        return ""
-    return url.replace("en", "pt").replace(
-        "weather-forecast", "current-weather")
+def try_to_grab_element_text(browser: wd.Chrome, css_selector: str) -> str:
+    element: WebElement|None = \
+        browser.find_element(By.CSS_SELECTOR, css_selector)
+    
+    if element:
+        return element.text
+    
+    return ''
+
+def try_to_grab_element_text_and_fix_temperature(
+    browser: wd.Chrome, css_selector: str, fix: str) -> str:
+    
+    text = try_to_grab_element_text(browser, css_selector)
+    
+    if text: 
+        return text + fix
+    
+    return ''
 
 if __name__ == "__main__":
     main()
