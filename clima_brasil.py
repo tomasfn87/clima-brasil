@@ -133,32 +133,32 @@ def previsao_tempo_climatempo(
     browser.implicitly_wait(1)
 
     provider: str = "ClimaTempo"
-    
+
     title: str = "Previsão do tempo em "
     title += f"{ut.capitalize_all(cidade)}/{estado.upper()}, Brasil"
-    
+
     results: ResultSet = ResultSet(provider=provider, title=title)
 
     try:
         comparacao_elements: List[WebElement]|None = browser.find_elements(
             By.CSS_SELECTOR, '.today-forecast-card__intro')
         comparacao_texts: List[str] = []
-        
+
         if len(comparacao_elements) > 0:
             for i in comparacao_elements:
                 comparacao_texts.append(i.text)
             results.add_key_value(
                 'Comparação',
                 (" ".join(comparacao_texts) + '.'))
-            
+
         descricao_text: str = try_to_grab_element_text(
             browser,
             '.today-forecast-card__desc')
         if descricao_text:
             results.add_key_value('Descrição', descricao_text)
-            
+
         temperaturas: List[Dict[str, str]] = [
-            {   
+            {
                 'title': 'Temperatura mínima',
                 'css': '.daily-variables-grid__item.-temperature .daily-variables-grid__value.-cool',
             },
@@ -175,15 +175,15 @@ def previsao_tempo_climatempo(
                 'css': '.daily-variables-grid__item.-thermal .daily-variables-grid__value.-warm',
             },
         ]
-        
+
         for i in temperaturas:
             data = try_to_grab_element_text_and_fix_temperature(browser, i['css'], 'C')
             if data:
                 results.add_key_value(i['title'], data)
-        
+
         demais_dados: List[Dict[str, str]] = [
             {
-                'title': 'Chuva',
+                'title': 'Pluviosidade',
                 'css': '.daily-variables-grid__item.-rain .daily-variables-grid__value',
             },
             {
@@ -211,17 +211,17 @@ def previsao_tempo_climatempo(
                 'css': '.daily-variables-grid__item.-rainbow .daily-variables-grid__value',
             },
         ]
-        
+
         for i in demais_dados:
             data = try_to_grab_element_text(browser, i['css'])
             if data:
                 results.add_key_value(i['title'], data)
-            
+
     except:
         return ResultSet()
     finally:
         browser.quit()
-    
+
     return results
 
 def start_chrome(headless: bool=False) -> wd.Chrome:
@@ -248,20 +248,20 @@ def start_chrome(headless: bool=False) -> wd.Chrome:
 def try_to_grab_element_text(browser: wd.Chrome, css_selector: str) -> str:
     element: WebElement|None = \
         browser.find_element(By.CSS_SELECTOR, css_selector)
-    
+
     if element:
         return element.text
-    
+
     return ''
 
 def try_to_grab_element_text_and_fix_temperature(
     browser: wd.Chrome, css_selector: str, fix: str) -> str:
-    
+
     text = try_to_grab_element_text(browser, css_selector)
-    
-    if text: 
+
+    if text:
         return text + fix
-    
+
     return ''
 
 if __name__ == "__main__":
