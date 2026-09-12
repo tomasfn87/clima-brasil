@@ -4,7 +4,7 @@ from selenium import webdriver as wd
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
-from typing import Any, Dict, List
+from typing import Dict, List
 
 import numpy as np
 import re
@@ -57,7 +57,8 @@ def main() -> None:
         { "acronym": "SC", "name": "Santa Catarina" },
         { "acronym": "SP", "name": "São Paulo" },
         { "acronym": "SE", "name": "Sergipe "},
-        { "acronym": "TO", "name": "Tocantins" }], dtype=np.object_)
+        { "acronym": "TO", "name": "Tocantins" }
+    ], dtype=np.object_)
 
     if not ut.is_a_valid_fixed_length_acronym(
         s=estado, length=2, acronym_list=estados_brasileiros):
@@ -142,7 +143,7 @@ def previsao_tempo_climatempo(
     try:
         comparacao_elements: List[WebElement]|None = browser.find_elements(
             By.CSS_SELECTOR, '.today-forecast-card__intro')
-        
+
         comparacao_texts: List[str] = []
 
         if len(comparacao_elements) > 0:
@@ -152,6 +153,8 @@ def previsao_tempo_climatempo(
                 'Comparação',
                 " ".join(comparacao_texts) + '.')
 
+        common_source = '.daily-variables-grid__item.-'
+
         data_to_recover: List[Dict] = [
             {
                 'title': 'Descrição',
@@ -159,62 +162,62 @@ def previsao_tempo_climatempo(
             },
             {
                 'title': 'Temperatura mínima',
-                'css_selector': '.daily-variables-grid__item.-temperature .daily-variables-grid__value.-cool',
+                'css_selector': common_source + 'temperature .daily-variables-grid__value.-cool',
                 'changes': {
                     'append': 'C',
                 },
             },
             {
                 'title': 'Temperatura máxima',
-                'css_selector': '.daily-variables-grid__item.-temperature .daily-variables-grid__value.-warm',
+                'css_selector': common_source + 'temperature .daily-variables-grid__value.-warm',
                 'changes': {
                     'append': 'C',
                 },
             },
             {
                 'title': 'Sensação térmica mínima',
-                'css_selector': '.daily-variables-grid__item.-thermal .daily-variables-grid__value.-cool',
+                'css_selector': common_source + 'thermal .daily-variables-grid__value.-cool',
                 'changes': {
                     'append': 'C',
                 },
             },
             {
                 'title': 'Sensação térmica máxima',
-                'css_selector': '.daily-variables-grid__item.-thermal .daily-variables-grid__value.-warm',
+                'css_selector': common_source + 'thermal .daily-variables-grid__value.-warm',
                 'changes': {
                     'append': 'C'
                 },
             },
             {
                 'title': 'Pluviosidade',
-                'css_selector': '.daily-variables-grid__item.-rain .daily-variables-grid__value',
+                'css_selector': common_source + 'rain .daily-variables-grid__value',
                 'changes': {
                     'replace': [ '.', ',' ]
                 }
             },
             {
                 'title': 'Humidade mínima',
-                'css_selector': '.daily-variables-grid__item.-humidity .daily-variables-grid__value.-cool',
+                'css_selector': common_source + 'humidity .daily-variables-grid__value.-cool',
             },
             {
                 'title': 'Humidade máxima',
-                'css_selector': '.daily-variables-grid__item.-humidity .daily-variables-grid__value.-warm',
+                'css_selector': common_source + 'humidity .daily-variables-grid__value.-warm',
             },
             {
                 'title': 'Horário sol',
-                'css_selector': '.daily-variables-grid__item.-sun .daily-variables-grid__value',
+                'css_selector': common_source + 'sun .daily-variables-grid__value',
             },
             {
                 'title': 'Vento',
-                'css_selector': '.daily-variables-grid__item.-wind .daily-variables-grid__value',
+                'css_selector': common_source + 'wind .daily-variables-grid__value',
             },
             {
                 'title': 'Rajada de vento',
-                'css_selector': '.daily-variables-grid__item.-gust .daily-variables-grid__value',
+                'css_selector': common_source + 'gust .daily-variables-grid__value',
             },
             {
                 'title': 'Arco íris',
-                'css_selector': '.daily-variables-grid__item.-rainbow .daily-variables-grid__value',
+                'css_selector': common_source + 'rainbow .daily-variables-grid__value',
                 'changes': {
                     'replace': [ 'probabilid.', 'probabilidade' ],
                 },
@@ -266,16 +269,18 @@ def try_to_recover_data(browser: wd.Chrome, data_recovery_instruction: Dict) -> 
         data = element.text.strip()
     else:
         return ''
-    
+
     if 'changes' in data_recovery_instruction:
         changes = data_recovery_instruction['changes']
+
         if 'append' in changes:
             data += changes['append']
+
         if 'replace' in changes:
             data = data.replace(
                 changes['replace'][0],
                 changes['replace'][1])
-    
+
     return data
 
 if __name__ == "__main__":
