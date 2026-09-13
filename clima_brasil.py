@@ -141,21 +141,20 @@ def previsao_tempo_climatempo(
     results: ResultSet = ResultSet(provider=provider, title=title)
 
     try:
-        comparacao_elements: List[WebElement]|None = browser.find_elements(
-            By.CSS_SELECTOR, '.today-forecast-card__intro')
-
-        comparacao_texts: List[str] = []
-
-        if len(comparacao_elements) > 0:
-            for i in comparacao_elements:
-                comparacao_texts.append(i.text)
-            results.add_key_value(
-                'Comparação',
-                " ".join(comparacao_texts) + '.')
-
         common_source = '.daily-variables-grid__item.-'
 
         data_to_recover: List[Dict] = [
+            {
+                'title': 'Comparação',
+                'css_selector': '.today-forecast-card__intro',
+                'operation': {
+                    'action': 'join',
+                    'value': ' ',
+                },
+                'changes': {
+                    'append': '.',
+                },
+            },
             {
                 'title': 'Descrição',
                 'css_selector': '.today-forecast-card__desc',
@@ -270,16 +269,34 @@ def start_chrome(headless: bool=False) -> wd.Chrome:
 
 def try_to_recover_data(
     browser: wd.Chrome, data_recovery_instruction: Dict) -> str:
-    element: WebElement|None = \
-        browser.find_element(
-            By.CSS_SELECTOR,
-            data_recovery_instruction['css_selector'])
-
+    
     data = ''
+    
+    if 'operation' in data_recovery_instruction:
+        operation = data_recovery_instruction['operation']
+    
+        if operation['action'] == 'join':
+            data_parts = []
+        
+            elements: List[WebElement]|None = \
+                browser.find_elements(
+                    By.CSS_SELECTOR,
+                    data_recovery_instruction['css_selector'])
 
-    if element and element.text.strip():
-        data = element.text.strip()
+            for i in elements:
+                if i.text.strip():
+                    data_parts.append(i.text.strip())
+
+            data = operation['value'].join(data_parts)
     else:
+        element: WebElement|None = \
+            browser.find_element(
+                By.CSS_SELECTOR,
+                data_recovery_instruction['css_selector'])
+        if element and element.text.strip():
+            data = element.text.strip()
+
+    if not data:
         return ''
 
     if 'changes' in data_recovery_instruction:
