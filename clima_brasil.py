@@ -21,8 +21,8 @@ def main() -> None:
         return
     elif len(inputs) > 4:
         print("ERRO: digite apenas cidade e estado; coloque aspas simples ou")
-        print("  duplas  se o nome da cidade possuir mais de uma palavra ou")
-        print(r"    utilize  a barra invertida (\) para cancelar um espaço ")
+        print("  duplas se o nome da cidade possuir mais de uma palavra ou")
+        print(r"    utilize a barra invertida (\) para cancelar um espaço ")
         print("      vazio como separador de argumentos.")
         print_examples()
         return
@@ -141,7 +141,8 @@ def previsao_tempo_climatempo(
     results: ResultSet = ResultSet(provider=provider, title=title)
 
     try:
-        common_source = '.daily-variables-grid__item.-'
+        common_source_1: str = '.daily-variables-grid__item.-'
+        common_source_2: str = ' .daily-variables-grid__value'
 
         data_to_recover: List[Dict] = [
             {
@@ -161,75 +162,98 @@ def previsao_tempo_climatempo(
             },
             {
                 'title': 'Temperatura mínima',
-                'css_selector': common_source
-                    + 'temperature .daily-variables-grid__value.-cool',
+                'css_selector': common_source_1
+                    + 'temperature'
+                    + common_source_2
+                    + '.-cool',
                 'changes': {
                     'append': 'C',
                 },
             },
             {
                 'title': 'Temperatura máxima',
-                'css_selector': common_source
-                    + 'temperature .daily-variables-grid__value.-warm',
+                'css_selector': common_source_1
+                    + 'temperature'
+                    + common_source_2
+                    + '.-warm',
                 'changes': {
                     'append': 'C',
                 },
             },
             {
                 'title': 'Sensação térmica mínima',
-                'css_selector': common_source
-                    + 'thermal .daily-variables-grid__value.-cool',
+                'css_selector': common_source_1
+                    + 'thermal'
+                    + common_source_2
+                    + '.-cool',
                 'changes': {
                     'append': 'C',
                 },
             },
             {
                 'title': 'Sensação térmica máxima',
-                'css_selector': common_source
-                    + 'thermal .daily-variables-grid__value.-warm',
+                'css_selector': common_source_1
+                    + 'thermal'
+                    + common_source_2
+                    + '.-warm',
                 'changes': {
-                    'append': 'C'
+                    'append': 'C',
                 },
             },
             {
                 'title': 'Pluviosidade',
-                'css_selector': common_source
-                    + 'rain .daily-variables-grid__value',
+                'css_selector': common_source_1
+                    + 'rain'
+                    + common_source_2,
                 'changes': {
-                    'replace': [ '.', ',' ]
-                }
+                    'replace': [
+                        '.',
+                        ','
+                    ],
+                },
             },
             {
                 'title': 'Humidade mínima',
-                'css_selector': common_source
-                    + 'humidity .daily-variables-grid__value.-cool',
+                'css_selector': common_source_1
+                    + 'humidity'
+                    + common_source_2
+                    + '.-cool',
             },
             {
                 'title': 'Humidade máxima',
-                'css_selector': common_source
-                    + 'humidity .daily-variables-grid__value.-warm',
+                'css_selector': common_source_1
+                    + 'humidity'
+                    + common_source_2
+                    + '.-warm',
             },
             {
                 'title': 'Horário sol',
-                'css_selector': common_source
-                    + 'sun .daily-variables-grid__value',
+                'css_selector': common_source_1
+                    + 'sun'
+                    + common_source_2,
             },
             {
                 'title': 'Vento',
-                'css_selector': common_source
-                    + 'wind .daily-variables-grid__value',
+                'css_selector': common_source_1
+                    + 'wind'
+                    + common_source_2,
             },
             {
                 'title': 'Rajada de vento',
-                'css_selector': common_source
-                    + 'gust .daily-variables-grid__value',
+                'css_selector': common_source_1
+                    + 'gust'
+                    + common_source_2,
             },
             {
                 'title': 'Arco íris',
-                'css_selector': common_source
-                    + 'rainbow .daily-variables-grid__value',
+                'css_selector': common_source_1
+                    + 'rainbow'
+                    + common_source_2,
                 'changes': {
-                    'replace': [ 'probabilid.', 'probabilidade' ],
+                    'replace': [
+                        'probabilid.',
+                        'probabilidade'
+                    ],
                 },
             },
         ]
@@ -269,15 +293,15 @@ def start_chrome(headless: bool=False) -> wd.Chrome:
 
 def try_to_recover_data(
     browser: wd.Chrome, data_recovery_instruction: Dict) -> str:
-    
+
     data = ''
-    
+
     if 'operation' in data_recovery_instruction:
         operation = data_recovery_instruction['operation']
-    
+
         if operation['action'] == 'join':
             data_parts = []
-        
+
             elements: List[WebElement]|None = \
                 browser.find_elements(
                     By.CSS_SELECTOR,
