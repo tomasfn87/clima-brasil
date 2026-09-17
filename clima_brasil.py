@@ -118,7 +118,7 @@ def clima(
 def previsao_tempo_climatempo(
     cidade: str, estado: str, headless: bool=False) -> ResultSet:
 
-    browser: wd.Chrome = start_chrome(headless)
+    browser: wd.Chrome = start_chrome(headless=headless)
     browser.get("https://www.duckduckgo.com")
 
     browser.find_element(By.CSS_SELECTOR, 'textarea[data-mode="search"]') \
@@ -141,10 +141,7 @@ def previsao_tempo_climatempo(
     results: ResultSet = ResultSet(provider=provider, title=title)
 
     try:
-        common_source_1: str = '.daily-variables-grid__item.-'
-        common_source_2: str = ' .daily-variables-grid__value'
-
-        data_to_recover: List[Dict] = [
+        data_recovery_instructions: List[Dict] = [
             {
                 'title': 'Comparação',
                 'css_selector': '.today-forecast-card__intro',
@@ -162,49 +159,40 @@ def previsao_tempo_climatempo(
             },
             {
                 'title': 'Temperatura mínima',
-                'css_selector': common_source_1
-                    + 'temperature'
-                    + common_source_2
-                    + '.-cool',
+                'css_selector': climatempo_common_css_selector(
+                    'temperature', 'cool'),
                 'changes': {
                     'append': 'C',
                 },
             },
             {
                 'title': 'Temperatura máxima',
-                'css_selector': common_source_1
-                    + 'temperature'
-                    + common_source_2
-                    + '.-warm',
+                'css_selector': climatempo_common_css_selector(
+                    'temperature', 'warm'),
                 'changes': {
                     'append': 'C',
                 },
             },
             {
                 'title': 'Sensação térmica mínima',
-                'css_selector': common_source_1
-                    + 'thermal'
-                    + common_source_2
-                    + '.-cool',
+                'css_selector': climatempo_common_css_selector(
+                    'thermal', 'cool'),
                 'changes': {
                     'append': 'C',
                 },
             },
             {
                 'title': 'Sensação térmica máxima',
-                'css_selector': common_source_1
-                    + 'thermal'
-                    + common_source_2
-                    + '.-warm',
+                'css_selector': climatempo_common_css_selector(
+                    'thermal', 'warm'),
                 'changes': {
                     'append': 'C',
                 },
             },
             {
                 'title': 'Pluviosidade',
-                'css_selector': common_source_1
-                    + 'rain'
-                    + common_source_2,
+                'css_selector': climatempo_common_css_selector(
+                    'rain'),
                 'changes': {
                     'replace': [
                         '.',
@@ -214,41 +202,33 @@ def previsao_tempo_climatempo(
             },
             {
                 'title': 'Humidade mínima',
-                'css_selector': common_source_1
-                    + 'humidity'
-                    + common_source_2
-                    + '.-cool',
+                'css_selector': climatempo_common_css_selector(
+                    'humidity', 'cool'),
             },
             {
                 'title': 'Humidade máxima',
-                'css_selector': common_source_1
-                    + 'humidity'
-                    + common_source_2
-                    + '.-warm',
+                'css_selector': climatempo_common_css_selector(
+                    'humidity', 'warm'),
             },
             {
                 'title': 'Horário sol',
-                'css_selector': common_source_1
-                    + 'sun'
-                    + common_source_2,
+                'css_selector': climatempo_common_css_selector(
+                    'sun'),
             },
             {
                 'title': 'Vento',
-                'css_selector': common_source_1
-                    + 'wind'
-                    + common_source_2,
+                'css_selector': climatempo_common_css_selector(
+                    'wind'),
             },
             {
                 'title': 'Rajada de vento',
-                'css_selector': common_source_1
-                    + 'gust'
-                    + common_source_2,
+                'css_selector': climatempo_common_css_selector(
+                    'gust'),
             },
             {
                 'title': 'Arco íris',
-                'css_selector': common_source_1
-                    + 'rainbow'
-                    + common_source_2,
+                'css_selector': climatempo_common_css_selector(
+                    'rainbow'),
                 'changes': {
                     'replace': [
                         'probabilid.',
@@ -258,13 +238,14 @@ def previsao_tempo_climatempo(
             },
         ]
 
-        for i in data_to_recover:
+        for i in data_recovery_instructions:
             data = try_to_recover_data(browser, i)
             if data:
                 results.add_key_value(i['title'], data)
 
     except:
         return ResultSet()
+
     finally:
         browser.quit()
 
@@ -290,6 +271,18 @@ def start_chrome(headless: bool=False) -> wd.Chrome:
     options.add_experimental_option("prefs", prefs)
 
     return wd.Chrome(options=options)
+
+def climatempo_common_css_selector(data_id:str, variant:str=''):
+    common_source_1: str = '.daily-variables-grid__item.-'
+    common_source_2: str = ' .daily-variables-grid__value'
+    variant_prefix: str = '.-'
+
+    base_css_selector: str = common_source_1 + data_id + common_source_2
+
+    if not variant:
+        return base_css_selector
+
+    return base_css_selector + variant_prefix + variant
 
 def try_to_recover_data(
     browser: wd.Chrome, data_recovery_instruction: Dict) -> str:
