@@ -1,3 +1,4 @@
+from enum import Enum
 from result_set import ResultSet
 from result_sets_printer import ResultSetsPrinter
 from selenium import webdriver as wd
@@ -12,6 +13,10 @@ import sys
 import time as t
 import utils as ut
 from zoneinfo import ZoneInfo
+
+class Operation:
+    def join(separator):
+        return lambda data: separator.join(data) 
 
 class Change:
     def append(suffix):
@@ -152,10 +157,9 @@ def previsao_tempo_climatempo(
             {
                 'title': 'Comparação',
                 'css_selector': '.today-forecast-card__intro',
-                'operation': {
-                    'action': 'join',
-                    'value': ' ',
-                },
+                'operations': [
+                    Operation.join(' '),
+                ],
                 'changes': [
                     Change.append('.'),
                 ],
@@ -201,7 +205,7 @@ def previsao_tempo_climatempo(
                 'css_selector': climatempo_common_css_selector(
                     'rain'),
                 'changes': [
-                    Change.replace('.', ',')
+                    Change.replace('.', ','),
                 ]
             },
             {
@@ -234,7 +238,7 @@ def previsao_tempo_climatempo(
                 'css_selector': climatempo_common_css_selector(
                     'rainbow'),
                 'changes': [
-                    Change.replace('probabilid.', 'probabilidade')
+                    Change.replace('probabilid.', 'probabilidade'),
                 ]
             },
         ]
@@ -285,27 +289,32 @@ def climatempo_common_css_selector(data_id:str, variant:str=''):
 
     return base_css_selector + variant_prefix + variant
 
+def class_method_name(class_method):
+    result = '.'.join(str(class_method) \
+        .replace('<function ', '') \
+        .split('.')[0:2])
+
+    return result
+
 def try_to_recover_data(
     browser: wd.Chrome, data_recovery_instruction: Dict) -> str:
 
     data = ''
 
-    if 'operation' in data_recovery_instruction:
-        operation = data_recovery_instruction['operation']
+    if 'operations' in data_recovery_instruction:
+        for operation in data_recovery_instruction['operations']:
+            if class_method_name(operation) == 'Operation.join':
+                data_parts = []
 
-        if operation['action'] == 'join':
-            data_parts = []
-
-            elements: List[WebElement]|None = \
-                browser.find_elements(
+                elements: List[WebElement]|None = browser.find_elements(
                     By.CSS_SELECTOR,
                     data_recovery_instruction['css_selector'])
 
-            for i in elements:
-                if i.text.strip():
-                    data_parts.append(i.text.strip())
+                for i in elements:
+                    if i.text.strip():
+                        data_parts.append(i.text.strip())
 
-            data = operation['value'].join(data_parts)
+                data = operation(data_parts)
     else:
         element: WebElement|None = \
             browser.find_element(
