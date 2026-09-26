@@ -13,6 +13,13 @@ import time as t
 import utils as ut
 from zoneinfo import ZoneInfo
 
+class Change:
+    def append(suffix):
+        return lambda data: data + suffix
+
+    def replace(old, new):
+        return lambda data: data.replace(old, new)
+
 def main() -> None:
     inputs: List[str] = sys.argv
     if len(inputs) < 3:
@@ -149,9 +156,9 @@ def previsao_tempo_climatempo(
                     'action': 'join',
                     'value': ' ',
                 },
-                'changes': {
-                    'append': '.',
-                },
+                'changes': [
+                    Change.append('.'),
+                ],
             },
             {
                 'title': 'Descrição',
@@ -161,44 +168,41 @@ def previsao_tempo_climatempo(
                 'title': 'Temperatura mínima',
                 'css_selector': climatempo_common_css_selector(
                     'temperature', 'cool'),
-                'changes': {
-                    'append': 'C',
-                },
+                'changes': [
+                    Change.append('C'),
+                ],
             },
             {
                 'title': 'Temperatura máxima',
                 'css_selector': climatempo_common_css_selector(
                     'temperature', 'warm'),
-                'changes': {
-                    'append': 'C',
-                },
+                'changes': [
+                    Change.append('C'),
+                ],
             },
             {
                 'title': 'Sensação térmica mínima',
                 'css_selector': climatempo_common_css_selector(
                     'thermal', 'cool'),
                 'changes': {
-                    'append': 'C',
+                    Change.append('C'),
                 },
             },
             {
                 'title': 'Sensação térmica máxima',
                 'css_selector': climatempo_common_css_selector(
                     'thermal', 'warm'),
-                'changes': {
-                    'append': 'C',
-                },
+                'changes': [
+                    Change.append('C'),
+                ],
             },
             {
                 'title': 'Pluviosidade',
                 'css_selector': climatempo_common_css_selector(
                     'rain'),
-                'changes': {
-                    'replace': [
-                        '.',
-                        ','
-                    ],
-                },
+                'changes': [
+                    Change.replace('.', ',')
+                ]
             },
             {
                 'title': 'Humidade mínima',
@@ -229,12 +233,9 @@ def previsao_tempo_climatempo(
                 'title': 'Arco íris',
                 'css_selector': climatempo_common_css_selector(
                     'rainbow'),
-                'changes': {
-                    'replace': [
-                        'probabilid.',
-                        'probabilidade'
-                    ],
-                },
+                'changes': [
+                    Change.replace('probabilid.', 'probabilidade')
+                ]
             },
         ]
 
@@ -316,16 +317,8 @@ def try_to_recover_data(
     if not data:
         return ''
 
-    if 'changes' in data_recovery_instruction:
-        changes = data_recovery_instruction['changes']
-
-        if 'append' in changes:
-            data += changes['append']
-
-        if 'replace' in changes:
-            data = data.replace(
-                changes['replace'][0],
-                changes['replace'][1])
+    for change in data_recovery_instruction.get('changes', []):
+        data = change(data)
 
     return data
 
