@@ -1,4 +1,3 @@
-from enum import Enum
 from result_set import ResultSet
 from result_sets_printer import ResultSetsPrinter
 from selenium import webdriver as wd
@@ -16,7 +15,7 @@ from zoneinfo import ZoneInfo
 
 class Operation:
     def join(separator):
-        return lambda data: separator.join(data) 
+        return lambda data: separator.join(data)
 
 class Change:
     def append(suffix):
@@ -130,29 +129,35 @@ def clima(
 def previsao_tempo_climatempo(
     cidade: str, estado: str, headless: bool=False) -> ResultSet:
 
-    browser: wd.Chrome = start_chrome(headless=headless)
-    browser.get("https://www.duckduckgo.com")
-
-    browser.find_element(By.CSS_SELECTOR, 'textarea[data-mode="search"]') \
-        .send_keys(
-            f"climatempo previsao-do-tempo {cidade} {estado} brasil",
-            Keys.ENTER)
-
-    browser.find_element(
-        By.CSS_SELECTOR, 'article h2 a[href*="previsao-do-tempo/cidade"]'
-    ).click()
-
-    t.sleep(1)
-    browser.implicitly_wait(2)
-
     provider: str = "ClimaTempo"
-
     title: str = "Previsão do tempo em "
     title += f"{ut.capitalize_all(cidade)}/{estado.upper()}, Brasil"
 
     results: ResultSet = ResultSet(provider=provider, title=title)
 
     try:
+        browser: wd.Chrome = start_chrome(headless=headless)
+        browser.get("https://www.duckduckgo.com")
+
+        t.sleep(1)
+        browser.implicitly_wait(2)
+
+        browser.find_element(
+            By.CSS_SELECTOR, 'textarea[data-mode="search"]') \
+            .send_keys(
+                f"climatempo previsao-do-tempo {cidade} {estado} brasil",
+                Keys.ENTER)
+
+        t.sleep(1)
+        browser.implicitly_wait(2)
+
+        browser.find_element(
+            By.CSS_SELECTOR, 'article h2 a[href*="previsao-do-tempo/cidade"]'
+        ).click()
+
+        t.sleep(1)
+        browser.implicitly_wait(2)
+
         data_recovery_instructions: List[Dict] = [
             {
                 'title': 'Comparação',
@@ -188,9 +193,9 @@ def previsao_tempo_climatempo(
                 'title': 'Sensação térmica mínima',
                 'css_selector': climatempo_common_css_selector(
                     'thermal', 'cool'),
-                'changes': {
+                'changes': [
                     Change.append('C'),
-                },
+                ],
             },
             {
                 'title': 'Sensação térmica máxima',
@@ -206,7 +211,7 @@ def previsao_tempo_climatempo(
                     'rain'),
                 'changes': [
                     Change.replace('.', ','),
-                ]
+                ],
             },
             {
                 'title': 'Humidade mínima',
@@ -239,7 +244,7 @@ def previsao_tempo_climatempo(
                     'rainbow'),
                 'changes': [
                     Change.replace('probabilid.', 'probabilidade'),
-                ]
+                ],
             },
         ]
 
@@ -247,9 +252,6 @@ def previsao_tempo_climatempo(
             data = try_to_recover_data(browser, i)
             if data:
                 results.add_key_value(i['title'], data)
-
-    except:
-        return ResultSet()
 
     finally:
         browser.quit()
@@ -301,35 +303,37 @@ def try_to_recover_data(
 
     data = ''
 
-    if 'operations' in data_recovery_instruction:
-        for operation in data_recovery_instruction['operations']:
-            if class_method_name(operation) == 'Operation.join':
-                data_parts = []
+    try:
+        if 'operations' in data_recovery_instruction:
+            for operation in data_recovery_instruction['operations']:
+                if class_method_name(operation) == 'Operation.join':
+                    data_parts = []
 
-                elements: List[WebElement]|None = browser.find_elements(
+                    elements: List[WebElement]|None = browser.find_elements(
+                        By.CSS_SELECTOR,
+                        data_recovery_instruction['css_selector'])
+
+                    for i in elements:
+                        if i.text.strip():
+                            data_parts.append(i.text.strip())
+
+                    data = operation(data_parts)
+        else:
+            element: WebElement|None = \
+                browser.find_element(
                     By.CSS_SELECTOR,
                     data_recovery_instruction['css_selector'])
+            if element and element.text.strip():
+                data = element.text.strip()
 
-                for i in elements:
-                    if i.text.strip():
-                        data_parts.append(i.text.strip())
+        if not data:
+            return ''
 
-                data = operation(data_parts)
-    else:
-        element: WebElement|None = \
-            browser.find_element(
-                By.CSS_SELECTOR,
-                data_recovery_instruction['css_selector'])
-        if element and element.text.strip():
-            data = element.text.strip()
+        for change in data_recovery_instruction.get('changes', []):
+            data = change(data)
 
-    if not data:
-        return ''
-
-    for change in data_recovery_instruction.get('changes', []):
-        data = change(data)
-
-    return data
+    finally:
+        return data
 
 if __name__ == "__main__":
     main()
