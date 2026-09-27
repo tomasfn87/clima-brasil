@@ -1,6 +1,6 @@
 from result_set import ResultSet
 from typing import Any, List
-
+from zoneinfo import ZoneInfo
 import datetime as dt
 import numpy as np
 import utils as ut
@@ -40,7 +40,7 @@ class ResultSetsPrinter:
                 max_header_length = header_length
         return max_header_length
 
-    def print_all(self: Any, tz: dt.timezone) -> None:
+    def print_all(self: Any, tz: ZoneInfo) -> None:
         print(f" ->  {str(dt.datetime.now(tz=tz))[0:19]}")
 
         r_list = self.result_list

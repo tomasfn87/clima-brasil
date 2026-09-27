@@ -4,28 +4,31 @@ from selenium import webdriver as wd
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
-from typing import Dict, List
-
+from typing import Any, Callable
+from zoneinfo import ZoneInfo
 import numpy as np
 import re
 import sys
 import time as t
 import utils as ut
-from zoneinfo import ZoneInfo
 
 class Operation:
-    def join(separator):
+    @staticmethod
+    def join(separator: str) -> Callable[[list[str]], str]:
         return lambda data: separator.join(data)
 
 class Change:
-    def append(suffix):
+    @staticmethod
+    def append(suffix: str) -> Callable[[str], str]:
         return lambda data: data + suffix
 
-    def replace(old, new):
+    @staticmethod
+    def replace(old: str, new: str) -> Callable[[str], str]:
         return lambda data: data.replace(old, new)
 
 def main() -> None:
-    inputs: List[str] = sys.argv
+    inputs: list[str] = sys.argv
+
     if len(inputs) < 3:
         print("ERRO: é necessário digitar cidade e estado.")
         print_examples()
@@ -158,7 +161,7 @@ def previsao_tempo_climatempo(
         t.sleep(1)
         browser.implicitly_wait(2)
 
-        data_recovery_instructions: List[Dict] = [
+        data_recovery_instructions: list[dict] = [
             {
                 'title': 'Comparação',
                 'css_selector': '.today-forecast-card__intro',
@@ -273,13 +276,13 @@ def start_chrome(headless: bool=False) -> wd.Chrome:
     options.add_argument("--disable-dev-shm-usage")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
-    prefs: Dict[str, int] = {
+    prefs: dict[str, int] = {
         "profile.managed_default_content_settings.images": 2}
     options.add_experimental_option("prefs", prefs)
 
     return wd.Chrome(options=options)
 
-def climatempo_common_css_selector(data_id:str, variant:str=''):
+def climatempo_common_css_selector(data_id: str, variant: str=''):
     common_source_1: str = '.daily-variables-grid__item.-'
     common_source_2: str = ' .daily-variables-grid__value'
     variant_prefix: str = '.-'
@@ -291,25 +294,20 @@ def climatempo_common_css_selector(data_id:str, variant:str=''):
 
     return base_css_selector + variant_prefix + variant
 
-def class_method_name(class_method):
-    result = '.'.join(str(class_method) \
-        .replace('<function ', '') \
-        .split('.')[0:2])
-
-    return result
+def uncalled_lambda_name(uncalled_lambda: Callable[..., Any]):
+    return '.'.join(str(uncalled_lambda).split(' ')[1].split('.')[0:2])
 
 def try_to_recover_data(
-    browser: wd.Chrome, data_recovery_instruction: Dict) -> str:
-
-    data = ''
+    browser: wd.Chrome, data_recovery_instruction: dict) -> str:
+    data: str = ''
 
     try:
         if 'operations' in data_recovery_instruction:
             for operation in data_recovery_instruction['operations']:
-                if class_method_name(operation) == 'Operation.join':
+                if uncalled_lambda_name(operation) == 'Operation.join':
                     data_parts = []
 
-                    elements: List[WebElement]|None = browser.find_elements(
+                    elements: list[WebElement] = browser.find_elements(
                         By.CSS_SELECTOR,
                         data_recovery_instruction['css_selector'])
 
