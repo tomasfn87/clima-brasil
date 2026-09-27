@@ -27,29 +27,30 @@ class Change:
         return lambda data: data.replace(old, new)
 
 class DataRecoveryInstruction:
-    def __init__(
-        self,
-        title: str,
-        css_selector: str,
-        operations: list[Callable],
-        changes: list[Callable]):
-        
-        self.title = title
-        self.css_selector = css_selector
-        self.operations = operations
-        self.changes = changes
-    
-    def get_title(self):
+    def __init__(self, title: str, css_selector: str):
+        self.title: str = title
+        self.css_selector: str = css_selector
+
+        self.operations: list[Callable] = []
+        self.changes: list[Callable] = []
+
+    def get_title(self) -> str:
         return self.title
-    
-    def get_css_selector(self):
+
+    def get_css_selector(self) -> str:
         return self.css_selector
     
-    def get_operations(self):
+    def get_operations(self) -> list[Callable]:
         return self.operations
-    
-    def get_changes(self):
+
+    def get_changes(self) -> list[Callable]:
         return self.changes
+
+    def add_operation(self, operation: Callable):
+        self.operations.append(operation)
+
+    def add_change(self, change: Callable):
+        self.changes.append(change)
 
 def main() -> None:
     inputs: list[str] = sys.argv
@@ -185,98 +186,94 @@ def previsao_tempo_climatempo(
 
         t.sleep(1)
         browser.implicitly_wait(2)
-        
-        data_recovery_instructions: list[DataRecoveryInstruction] = [
-            DataRecoveryInstruction(
-                title='Comparação',
-                css_selector='.today-forecast-card__intro',
-                operations=[ Operation.join(' ') ],
-                changes=[ Change.append('.') ]
-            ),
-            DataRecoveryInstruction(
-                title='Descrição',
-                css_selector='.today-forecast-card__desc',
-                operations=[],
-                changes=[]
-            ),
-            DataRecoveryInstruction(
-                title='Temperatura mínima',
-                css_selector=climatempo_common_css_selector(
-                    'temperature', 'cool'),
-                operations=[],
-                changes=[ Change.append('C') ]
-            ),
-            DataRecoveryInstruction(
-                title='Temperatura máxima',
-                css_selector=climatempo_common_css_selector(
-                    'temperature', 'warm'),
-                operations=[],
-                changes=[ Change.append('C') ]
-            ),
-            DataRecoveryInstruction(
-                title='Sensação térmica mínima',
-                css_selector=climatempo_common_css_selector(
-                    'thermal', 'cool'),
-                operations=[],
-                changes=[ Change.append('C') ]
-            ),
-            DataRecoveryInstruction(
-                title='Sensação térmica máxima',
-                css_selector=climatempo_common_css_selector(
-                    'thermal', 'warm'),
-                operations=[],
-                changes=[ Change.append('C') ]
-            ),
-            DataRecoveryInstruction(
-                title='Pluviosidade',
-                css_selector=climatempo_common_css_selector(
-                    'rain'),
-                operations=[],
-                changes=[ Change.replace('.', ',') ]
-            ),
-            DataRecoveryInstruction(
-                title='Humidade mínima',
-                css_selector=climatempo_common_css_selector(
-                    'humidity', 'cool'),
-                operations=[],
-                changes=[]
-            ),
-            DataRecoveryInstruction(
-                title='Humidade máxima',
-                css_selector=climatempo_common_css_selector(
-                    'humidity', 'warm'),
-                operations=[],
-                changes=[]
-            ),
-            DataRecoveryInstruction(
-                title='Horário sol',
-                css_selector=climatempo_common_css_selector(
-                    'sun'),
-                operations=[],
-                changes=[]
-            ),
-            DataRecoveryInstruction(
-                title='Vento',
-                css_selector=climatempo_common_css_selector(
-                    'wind'),
-                operations=[],
-                changes=[]
-            ),
-            DataRecoveryInstruction(
-                title='Rajada de vento',
-                css_selector=climatempo_common_css_selector(
-                    'gust'),
-                operations=[],
-                changes=[]
-            ),
-            DataRecoveryInstruction(
-                title='Arco-íris',
-                css_selector=climatempo_common_css_selector(
-                    'rainbow'),
-                operations=[],
-                changes=[ Change.replace('probabilid.', 'probabilidade') ]
-            ),
-        ]
+
+        comparacao = DataRecoveryInstruction(
+            title='Comparação',
+            css_selector='.today-forecast-card__intro'
+        )
+        comparacao.add_operation(Operation.join(' '))
+        comparacao.add_change(Change.append('.'))
+
+        descricao = DataRecoveryInstruction(
+            title='Descrição',
+            css_selector='.today-forecast-card__desc'
+        )
+
+        temperatura_minima = DataRecoveryInstruction(
+            title='Temperatura mínima',
+            css_selector=climatempo_common_css_selector('temperature', 'cool')
+        )
+        temperatura_minima.add_change(Change.append('C'))
+
+        temperatura_maxima = DataRecoveryInstruction(
+            title='Temperatura máxima',
+            css_selector=climatempo_common_css_selector('temperature', 'warm')
+        )
+        temperatura_maxima.add_change(Change.append('C'))
+
+        sensacao_termica_minima = DataRecoveryInstruction(
+            title='Sensação térmica mínima',
+            css_selector=climatempo_common_css_selector('thermal', 'cool')
+        )        
+        sensacao_termica_minima.add_change(Change.append('C'))
+
+        sensacao_termica_maxima = DataRecoveryInstruction(
+            title='Sensação térmica máxima',
+            css_selector=climatempo_common_css_selector('thermal', 'warm')
+        )
+        sensacao_termica_maxima.add_change(Change.append('C'))
+
+        pluviosidade = DataRecoveryInstruction(
+            title='Pluviosidade',
+            css_selector=climatempo_common_css_selector('rain')
+        )
+        pluviosidade.add_change(Change.replace('.', ','))
+
+        humidade_minima = DataRecoveryInstruction(
+            title='Humidade mínima',
+            css_selector=climatempo_common_css_selector('humidity', 'cool')
+        )
+
+        humidade_maxima = DataRecoveryInstruction(
+            title='Humidade máxima',
+            css_selector=climatempo_common_css_selector('humidity', 'warm')
+        )
+
+        horario_sol = DataRecoveryInstruction(
+            title='Horário sol',
+            css_selector=climatempo_common_css_selector('sun')
+        )
+
+        vento = DataRecoveryInstruction(
+            title='Vento',
+            css_selector=climatempo_common_css_selector('wind')
+        )
+
+        rajada_de_vento = DataRecoveryInstruction(
+            title='Rajada de vento',
+            css_selector=climatempo_common_css_selector('gust')
+        )
+
+        arco_iris = DataRecoveryInstruction(
+            title='Arco-íris',
+            css_selector=climatempo_common_css_selector('rainbow')
+        )
+        arco_iris.add_change(Change.replace('probabilid.', 'probabilidade'))
+
+        data_recovery_instructions: list[DataRecoveryInstruction] = []
+        data_recovery_instructions.append(comparacao)
+        data_recovery_instructions.append(descricao)
+        data_recovery_instructions.append(temperatura_minima)
+        data_recovery_instructions.append(temperatura_maxima)
+        data_recovery_instructions.append(sensacao_termica_minima)
+        data_recovery_instructions.append(sensacao_termica_maxima)
+        data_recovery_instructions.append(pluviosidade)
+        data_recovery_instructions.append(humidade_minima)
+        data_recovery_instructions.append(humidade_maxima)
+        data_recovery_instructions.append(horario_sol)
+        data_recovery_instructions.append(vento)
+        data_recovery_instructions.append(rajada_de_vento)
+        data_recovery_instructions.append(arco_iris)
 
         for instruction in data_recovery_instructions:
             data = try_to_recover_data(browser, instruction)
