@@ -26,6 +26,31 @@ class Change:
     def replace(old: str, new: str) -> Callable[[str], str]:
         return lambda data: data.replace(old, new)
 
+class DataRecoveryInstruction:
+    def __init__(
+        self,
+        title: str,
+        css_selector: str,
+        operations: list[Callable],
+        changes: list[Callable]):
+        
+        self.title = title
+        self.css_selector = css_selector
+        self.operations = operations
+        self.changes = changes
+    
+    def get_title(self):
+        return self.title
+    
+    def get_css_selector(self):
+        return self.css_selector
+    
+    def get_operations(self):
+        return self.operations
+    
+    def get_changes(self):
+        return self.changes
+
 def main() -> None:
     inputs: list[str] = sys.argv
 
@@ -160,101 +185,103 @@ def previsao_tempo_climatempo(
 
         t.sleep(1)
         browser.implicitly_wait(2)
-
-        data_recovery_instructions: list[dict] = [
-            {
-                'title': 'Comparação',
-                'css_selector': '.today-forecast-card__intro',
-                'operations': [
-                    Operation.join(' '),
-                ],
-                'changes': [
-                    Change.append('.'),
-                ],
-            },
-            {
-                'title': 'Descrição',
-                'css_selector': '.today-forecast-card__desc',
-            },
-            {
-                'title': 'Temperatura mínima',
-                'css_selector': climatempo_common_css_selector(
+        
+        data_recovery_instructions: list[DataRecoveryInstruction] = [
+            DataRecoveryInstruction(
+                title='Comparação',
+                css_selector='.today-forecast-card__intro',
+                operations=[ Operation.join(' ') ],
+                changes=[ Change.append('.') ]
+            ),
+            DataRecoveryInstruction(
+                title='Descrição',
+                css_selector='.today-forecast-card__desc',
+                operations=[],
+                changes=[]
+            ),
+            DataRecoveryInstruction(
+                title='Temperatura mínima',
+                css_selector=climatempo_common_css_selector(
                     'temperature', 'cool'),
-                'changes': [
-                    Change.append('C'),
-                ],
-            },
-            {
-                'title': 'Temperatura máxima',
-                'css_selector': climatempo_common_css_selector(
+                operations=[],
+                changes=[ Change.append('C') ]
+            ),
+            DataRecoveryInstruction(
+                title='Temperatura máxima',
+                css_selector=climatempo_common_css_selector(
                     'temperature', 'warm'),
-                'changes': [
-                    Change.append('C'),
-                ],
-            },
-            {
-                'title': 'Sensação térmica mínima',
-                'css_selector': climatempo_common_css_selector(
+                operations=[],
+                changes=[ Change.append('C') ]
+            ),
+            DataRecoveryInstruction(
+                title='Sensação térmica mínima',
+                css_selector=climatempo_common_css_selector(
                     'thermal', 'cool'),
-                'changes': [
-                    Change.append('C'),
-                ],
-            },
-            {
-                'title': 'Sensação térmica máxima',
-                'css_selector': climatempo_common_css_selector(
+                operations=[],
+                changes=[ Change.append('C') ]
+            ),
+            DataRecoveryInstruction(
+                title='Sensação térmica máxima',
+                css_selector=climatempo_common_css_selector(
                     'thermal', 'warm'),
-                'changes': [
-                    Change.append('C'),
-                ],
-            },
-            {
-                'title': 'Pluviosidade',
-                'css_selector': climatempo_common_css_selector(
+                operations=[],
+                changes=[ Change.append('C') ]
+            ),
+            DataRecoveryInstruction(
+                title='Pluviosidade',
+                css_selector=climatempo_common_css_selector(
                     'rain'),
-                'changes': [
-                    Change.replace('.', ','),
-                ],
-            },
-            {
-                'title': 'Humidade mínima',
-                'css_selector': climatempo_common_css_selector(
+                operations=[],
+                changes=[ Change.replace('.', ',') ]
+            ),
+            DataRecoveryInstruction(
+                title='Humidade mínima',
+                css_selector=climatempo_common_css_selector(
                     'humidity', 'cool'),
-            },
-            {
-                'title': 'Humidade máxima',
-                'css_selector': climatempo_common_css_selector(
+                operations=[],
+                changes=[]
+            ),
+            DataRecoveryInstruction(
+                title='Humidade máxima',
+                css_selector=climatempo_common_css_selector(
                     'humidity', 'warm'),
-            },
-            {
-                'title': 'Horário sol',
-                'css_selector': climatempo_common_css_selector(
+                operations=[],
+                changes=[]
+            ),
+            DataRecoveryInstruction(
+                title='Horário sol',
+                css_selector=climatempo_common_css_selector(
                     'sun'),
-            },
-            {
-                'title': 'Vento',
-                'css_selector': climatempo_common_css_selector(
+                operations=[],
+                changes=[]
+            ),
+            DataRecoveryInstruction(
+                title='Vento',
+                css_selector=climatempo_common_css_selector(
                     'wind'),
-            },
-            {
-                'title': 'Rajada de vento',
-                'css_selector': climatempo_common_css_selector(
+                operations=[],
+                changes=[]
+            ),
+            DataRecoveryInstruction(
+                title='Rajada de vento',
+                css_selector=climatempo_common_css_selector(
                     'gust'),
-            },
-            {
-                'title': 'Arco íris',
-                'css_selector': climatempo_common_css_selector(
+                operations=[],
+                changes=[]
+            ),
+            DataRecoveryInstruction(
+                title='Arco-íris',
+                css_selector=climatempo_common_css_selector(
                     'rainbow'),
-                'changes': [
-                    Change.replace('probabilid.', 'probabilidade'),
-                ],
-            },
+                operations=[],
+                changes=[ Change.replace('probabilid.', 'probabilidade') ]
+            ),
         ]
 
-        for i in data_recovery_instructions:
-            data = try_to_recover_data(browser, i)
+        for instruction in data_recovery_instructions:
+            data = try_to_recover_data(browser, instruction)
             if data:
-                results.add_key_value(i['title'], data)
+                results.add_key_value(instruction.get_title(), data)
 
     finally:
         browser.quit()
@@ -298,18 +325,20 @@ def uncalled_lambda_name(uncalled_lambda: Callable[..., Any]):
     return '.'.join(str(uncalled_lambda).split(' ')[1].split('.')[0:2])
 
 def try_to_recover_data(
-    browser: wd.Chrome, data_recovery_instruction: dict) -> str:
+    browser: wd.Chrome,
+    data_recovery_instruction: DataRecoveryInstruction) -> str:
     data: str = ''
+    instruction = data_recovery_instruction
 
     try:
-        if 'operations' in data_recovery_instruction:
-            for operation in data_recovery_instruction['operations']:
+        if instruction.get_operations():
+            for operation in instruction.get_operations():
                 if uncalled_lambda_name(operation) == 'Operation.join':
                     data_parts = []
 
                     elements: list[WebElement] = browser.find_elements(
                         By.CSS_SELECTOR,
-                        data_recovery_instruction['css_selector'])
+                        instruction.get_css_selector())
 
                     for i in elements:
                         if i.text.strip():
@@ -320,14 +349,14 @@ def try_to_recover_data(
             element: WebElement|None = \
                 browser.find_element(
                     By.CSS_SELECTOR,
-                    data_recovery_instruction['css_selector'])
+                    instruction.get_css_selector())
             if element and element.text.strip():
                 data = element.text.strip()
 
         if not data:
             return ''
 
-        for change in data_recovery_instruction.get('changes', []):
+        for change in instruction.get_changes():
             data = change(data)
 
     finally:
