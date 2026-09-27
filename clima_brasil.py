@@ -12,6 +12,17 @@ import sys
 import time as t
 import utils as ut
 
+class CssSel:
+    @staticmethod
+    def climatempo_1(data_id: str, variant: str = "") -> str:
+        result = f".daily-variables-grid__item.-{data_id}"
+        result += " .daily-variables-grid__value"
+        
+        if not variant:
+            return result
+        
+        return f"{result}.-{variant}"
+
 class Operation:
     @staticmethod
     def join(separator: str) -> Callable[[list[str]], str]:
@@ -201,62 +212,62 @@ def previsao_tempo_climatempo(
 
         temperatura_minima = DataRecoveryInstruction(
             title='Temperatura mínima',
-            css_selector=climatempo_common_css_selector('temperature', 'cool')
+            css_selector=CssSel.climatempo_1('temperature', 'cool')
         )
         temperatura_minima.add_change(Change.append('C'))
 
         temperatura_maxima = DataRecoveryInstruction(
             title='Temperatura máxima',
-            css_selector=climatempo_common_css_selector('temperature', 'warm')
+            css_selector=CssSel.climatempo_1('temperature', 'warm')
         )
         temperatura_maxima.add_change(Change.append('C'))
 
         sensacao_termica_minima = DataRecoveryInstruction(
             title='Sensação térmica mínima',
-            css_selector=climatempo_common_css_selector('thermal', 'cool')
+            css_selector=CssSel.climatempo_1('thermal', 'cool')
         )        
         sensacao_termica_minima.add_change(Change.append('C'))
 
         sensacao_termica_maxima = DataRecoveryInstruction(
             title='Sensação térmica máxima',
-            css_selector=climatempo_common_css_selector('thermal', 'warm')
+            css_selector=CssSel.climatempo_1('thermal', 'warm')
         )
         sensacao_termica_maxima.add_change(Change.append('C'))
 
         pluviosidade = DataRecoveryInstruction(
             title='Pluviosidade',
-            css_selector=climatempo_common_css_selector('rain')
+            css_selector=CssSel.climatempo_1('rain')
         )
         pluviosidade.add_change(Change.replace('.', ','))
 
         humidade_minima = DataRecoveryInstruction(
             title='Humidade mínima',
-            css_selector=climatempo_common_css_selector('humidity', 'cool')
+            css_selector=CssSel.climatempo_1('humidity', 'cool')
         )
 
         humidade_maxima = DataRecoveryInstruction(
             title='Humidade máxima',
-            css_selector=climatempo_common_css_selector('humidity', 'warm')
+            css_selector=CssSel.climatempo_1('humidity', 'warm')
         )
 
         horario_sol = DataRecoveryInstruction(
             title='Horário sol',
-            css_selector=climatempo_common_css_selector('sun')
+            css_selector=CssSel.climatempo_1('sun')
         )
 
         vento = DataRecoveryInstruction(
             title='Vento',
-            css_selector=climatempo_common_css_selector('wind')
+            css_selector=CssSel.climatempo_1('wind')
         )
 
         rajada_de_vento = DataRecoveryInstruction(
             title='Rajada de vento',
-            css_selector=climatempo_common_css_selector('gust')
+            css_selector=CssSel.climatempo_1('gust')
         )
 
         arco_iris = DataRecoveryInstruction(
             title='Arco-íris',
-            css_selector=climatempo_common_css_selector('rainbow')
+            css_selector=CssSel.climatempo_1('rainbow')
         )
         arco_iris.add_change(Change.replace('probabilid.', 'probabilidade'))
 
@@ -305,18 +316,6 @@ def start_chrome(headless: bool=False) -> wd.Chrome:
     options.add_experimental_option("prefs", prefs)
 
     return wd.Chrome(options=options)
-
-def climatempo_common_css_selector(data_id: str, variant: str=''):
-    common_source_1: str = '.daily-variables-grid__item.-'
-    common_source_2: str = ' .daily-variables-grid__value'
-    variant_prefix: str = '.-'
-
-    base_css_selector: str = common_source_1 + data_id + common_source_2
-
-    if not variant:
-        return base_css_selector
-
-    return base_css_selector + variant_prefix + variant
 
 def uncalled_lambda_name(uncalled_lambda: Callable[..., Any]):
     return '.'.join(str(uncalled_lambda).split(' ')[1].split('.')[0:2])
