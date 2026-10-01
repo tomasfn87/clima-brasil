@@ -17,10 +17,10 @@ class CssSel:
     def climatempo_1(data_id: str, variant: str = "") -> str:
         result = f".daily-variables-grid__item.-{data_id}"
         result += " .daily-variables-grid__value"
-        
+
         if not variant:
             return result
-        
+
         return f"{result}.-{variant}"
 
 class Operation:
@@ -50,7 +50,7 @@ class DataRecoveryInstruction:
 
     def get_css_selector(self) -> str:
         return self.css_selector
-    
+
     def get_operations(self) -> list[Callable]:
         return self.operations
 
@@ -225,7 +225,7 @@ def previsao_tempo_climatempo(
         sensacao_termica_minima = DataRecoveryInstruction(
             title='Sensação térmica mínima',
             css_selector=CssSel.climatempo_1('thermal', 'cool')
-        )        
+        )
         sensacao_termica_minima.add_change(Change.append('C'))
 
         sensacao_termica_maxima = DataRecoveryInstruction(
@@ -320,6 +320,39 @@ def start_chrome(headless: bool=False) -> wd.Chrome:
 def uncalled_lambda_name(uncalled_lambda: Callable[..., Any]):
     return '.'.join(str(uncalled_lambda).split(' ')[1].split('.')[0:2])
 
+def process_operations(
+    browser: wd.Chrome,
+    instruction: DataRecoveryInstruction) -> str:
+
+    data = ''
+
+    for operation in instruction.get_operations():
+        if uncalled_lambda_name(operation) == 'Operation.join':
+            data_parts = []
+
+            elements: list[WebElement] = browser.find_elements(
+                By.CSS_SELECTOR,
+                instruction.get_css_selector())
+
+            for i in elements:
+                if i.text.strip():
+                    data_parts.append(i.text.strip())
+
+            data = operation(data_parts)
+
+    return data
+
+def recover_data(
+    browser: wd.Chrome, instruction: DataRecoveryInstruction) -> str:
+
+    element: WebElement|None = browser.find_element(
+        By.CSS_SELECTOR, instruction.get_css_selector())
+
+    if element and element.text.strip():
+        return element.text.strip()
+
+    return ''
+
 def try_to_recover_data(
     browser: wd.Chrome,
     data_recovery_instruction: DataRecoveryInstruction) -> str:
@@ -328,26 +361,9 @@ def try_to_recover_data(
 
     try:
         if instruction.get_operations():
-            for operation in instruction.get_operations():
-                if uncalled_lambda_name(operation) == 'Operation.join':
-                    data_parts = []
-
-                    elements: list[WebElement] = browser.find_elements(
-                        By.CSS_SELECTOR,
-                        instruction.get_css_selector())
-
-                    for i in elements:
-                        if i.text.strip():
-                            data_parts.append(i.text.strip())
-
-                    data = operation(data_parts)
+            data = process_operations(browser, instruction)
         else:
-            element: WebElement|None = \
-                browser.find_element(
-                    By.CSS_SELECTOR,
-                    instruction.get_css_selector())
-            if element and element.text.strip():
-                data = element.text.strip()
+            data = recover_data(browser, instruction)
 
         if not data:
             return ''
